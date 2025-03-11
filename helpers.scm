@@ -29,3 +29,11 @@
 (define one?
   (lambda (x)
     (= x 1)))
+
+;; Function that extracts the leftmost atom
+(define leftmost
+  (lambda (l)
+    (cond
+     ((atom? (car l))
+      (car l))
+     (else (leftmost (car l))))))
