@@ -15,21 +15,38 @@
 	 ((atom? a) a)
 	 (else (leftmost (cdr l)))))))))
 
-;; Remove the first member
+;; Remove the leftmost ocurrence of a in l
 (define rember1*
   (lambda (a l)
-    (cond
-     ((null? l) '())
-     ((atom? (car l))
+    (letrec
+	((R (lambda (l)
+	      (cond
+	       ((null? l) '())
+	       ((atom? (car l))
+		(cond
+		 ((eq? (car l) a) (cdr l))
+		 (else (cons (car l)
+			     (R (cdr l))))))
+	       (else
+		(cond
+		 ((list?
+		   (R (car l))
+		   (car l))
+		  (cons (car l)
+			(R (cdr l))))
+		 (else (cons (R (car l))
+			     (cdr l)))))))))
+      (R l))))
+
+
+;;
+(define depth*
+  (lambda (l)
+    (let ((a (add1 (depth* (car l))))
+	  (d (depth* (cdr l))))
       (cond
-       ((eq? (car l) a) (cdr l))
-       (else (cons (car l)
-		   (rember1* a (cdr l))))))
-     (else
-      (cond
-       ((list? (rember1* a (car l))
-	       (car l))
-	(cons (car l)
-	      (rember1* a (cdr l))))
-       (else (cons (rember1* a (car l))
-		   (cdr l))))))))
+       ((null? l) 1)
+       ((atom? (car l)) d)
+       (else (cond
+	      ((> d a) d)
+	      (else a)))))))
