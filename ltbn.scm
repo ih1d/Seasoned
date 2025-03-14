@@ -3,7 +3,7 @@
 (load "helpers.scm")
 
 ;; Extract the leftmost symbol
-(define leftmost
+#;(define leftmost
   (lambda (l)
     (cond
      ((null? l) '())
@@ -50,3 +50,35 @@
       (let ((a (add1 (depth* (car l))))
 	    (d (depth* (cdr l))))
 	(if (> d a) d a))))))
+
+
+;; Scramble again
+(define scramble
+  (lambda (tup)
+    (letrec
+	((P (lambda (tup rp)
+	      (cond
+	       ((null? tup) '())
+	       (else
+		(let ((rp (cons (car tup) rp)))
+		  (cons (pick (car tup) rp)
+			(P (cdr tup) rp))))))))
+      (P tup '()))))
+
+
+;; Revised leftmost
+(define leftmost
+  (lambda (l)
+    (call-with-current-continuation
+     (lambda (skip)
+       (letrec
+	   ((lm (lambda (l)
+		  (cond
+		   ((null? l) '())
+		   ((atom? (car l))
+		    (skip (car l)))
+		   (else
+		    (begin
+		      (lm (car l))
+		      (lm (cdr l))))))))
+	 (lm l))))))
