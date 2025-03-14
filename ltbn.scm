@@ -39,14 +39,14 @@
       (R l))))
 
 
-;;
+;; count how many lists of lists
 (define depth*
   (lambda (l)
-    (let ((a (add1 (depth* (car l))))
-	  (d (depth* (cdr l))))
-      (cond
-       ((null? l) 1)
-       ((atom? (car l)) d)
-       (else (cond
-	      ((> d a) d)
-	      (else a)))))))
+    (cond
+     ((null? l) 1)
+     ((atom? (car l))
+      (depth* (cdr l)))
+     (else
+      (let ((a (add1 (depth* (car l))))
+	    (d (depth* (cdr l))))
+	(if (> d a) d a))))))
