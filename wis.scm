@@ -15,13 +15,6 @@
 
 (define x 3)
 
-(define value
-  (lambda (e)
-    ...
-    (cond
-     ((define? e) (*define e))
-     (else (the-meaning e))) ...))
-
 (define define?
   (lambda (e)
     (cond
@@ -30,8 +23,7 @@
       (eq? (car e) 'define))
      (else #f))))
 
-(define global-table
-  ... the-empty-table ...)
+(define global-table)
 
 (define *define
   (lambda (e)
@@ -186,3 +178,140 @@
       (a-prim sub1))
      ((eq? e 'number?)
       (a-prim number?)))))
+
+(define *cond
+  (lambda (e table)
+    (evcon (cond-lines-of e) table)))
+
+(define evcon
+  (lambda (lines table)
+    (cond
+     ((else? (question-of (car lines)))
+      (meaning (answer-of (car lines))
+	       table))
+     ((meaning (question-of (car lines))
+	       table)
+      (meaning (answer-of (car lines))
+	       table))
+     (else (evcon (cdr lines) table)))))
+
+(define *letcc
+  (lambda (e table)
+    (call-with-current-continuation
+     (lambda (skip)
+       (beglis (ccbody-of e)
+	       (extend
+		(name-of e)
+		(box (a-prim skip))
+		table))))))
+
+(define abort)
+
+(define value
+  (lambda (e)
+    (call-with-current-continuation
+     (lambda (the-end)
+       (set! abort the-end)
+       (cond
+	((define? e) (*define e))
+	(else (the-meaning e)))))))
+
+(define the-empty-table
+  (lambda (name)
+    (abort
+     (cons 'no-answer
+	   (cons name '())))))
+
+(define expression-to-action
+  (lambda (e)
+    (cond
+     ((atom? e) (atom-to-action e))
+     (else (list-to-action e)))))
+
+(define atom-to-action
+  (lambda (e)
+    (cond
+     ((number? e) *const)
+     ((eq? e #t) *const)
+     ((eq? e #f) *const)
+     ((eq? e 'cons) *const)
+     ((eq? e 'car) *const)
+     ((eq? e 'cdr) *const)
+     ((eq? e 'null?) *const)
+     ((eq? e 'eq?) *const)
+     ((eq? e 'atom?) *const)
+     ((eq? e 'zero?) *const)
+     ((eq? e 'add1) *const)
+     ((eq? e 'sub1) *const)
+     ((eq? e 'number?) *const)
+     (else *identifier))))
+
+(define list-to-action
+  (lambda (e)
+    (cond
+     ((atom? (car e))
+      (cond
+       ((eq? (car e) 'quote)
+	*quote)
+       ((eq? (car e) 'lambda)
+	*lambda)
+       ((eq? (car e) 'letcc)
+	*letcc)
+       ((eq? (car e) 'set!)
+	*set)
+       ((eq? (car e) 'cond)
+	*cond)
+       (else *application)))
+     (else *application))))
+
+(define text-of
+  (lambda (x)
+    (car (cdr x))))
+
+(define formals-of
+  (lambda (x)
+    (car (cdr x))))
+
+(define body-of
+  (lambda (x)
+    (cdr (cdr x))))
+
+(define ccbody-of
+  (lambda (x)
+    (cdr (cdr x))))
+
+(define name-of
+  (lambda (x)
+    (car (cdr x))))
+
+(define right-side-of
+  (lambda (x)
+    (cond
+     ((null? (cdr (cdr x))) 0)
+     (else (car (cdr (cdr x)))))))
+
+(define cond-lines-of
+  (lambda (x)
+    (cdr x)))
+
+(define else?
+  (lambda (x)
+    (cond
+     ((atom? x) (eq? x 'else))
+     (else #f))))
+
+(define question-of
+  (lambda (x)
+    (car x)))
+
+(define answer-of
+  (lambda (x)
+    (car (cdr x))))
+
+(define function-of
+  (lambda (x)
+    (car x)))
+
+(define arguments-of
+  (lambda (x)
+    (cdr x)))
